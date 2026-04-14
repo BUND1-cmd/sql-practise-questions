@@ -117,22 +117,34 @@ left join loans on customers.customer_id= loans.customer_id
 
 -- Q16. Show all Active loans with interest rate above 12%.
 -- Include customer_id, loan_type, principal, interest_rate.
+select customer_id,loan_type,principal,interest_rate,status from loans
+where status = "Active" and interest_rate> 12.00
+
 
 
 -- Q17. Show all Completed transactions between
 -- 2024-02-01 and 2024-03-31.
 -- Use BETWEEN for the date range.
+select transaction_type,amount,transaction_date,status from transactions
+where transaction_date between '2024-02-01' and '2024-03-31' and status in ("Completed")
 
 
 -- Q18. Show all customers whose name contains 'wa' (case insensitive).
 -- Use LIKE.
+select full_name,email from customers
+where full_name like '%wa%'
 
 
 -- Q19. Show accounts in Nairobi branches only.
 -- Branch names containing 'Nairobi'.
+select branch_id,branch_name,city,manager from branches
+where branch_name like '%nairobi%'
 
 
 -- Q20. Show the 3 largest transactions by amount.
+select transaction_id,amount from transactions 
+order by amount desc
+limit 3
 
 
 -- ============================================================
@@ -141,22 +153,41 @@ left join loans on customers.customer_id= loans.customer_id
 
 -- Q21. Show total transaction amount per account.
 -- Only show accounts with total transactions above 100,000.
+select account_id,
+ sum(amount) as total_transaction 
+from transactions
+group by account_id
+having total_transaction > 100000
 
 
 -- Q22. Show number of loans per customer.
 -- Only show customers with more than 1 loan.
+select customer_id, count(*) as number_of_loans
+from loans
+group by customer_id
+having count(*) > 1;
 
 
 -- Q23. Show average balance per city using customers and accounts.
 -- Join the two tables first, then group by city.
-
+select avg(accounts.balance) as average_balance,customers.city 
+from accounts
+join customers on accounts.customer_id= customers.customer_id
+group by city
 
 -- Q24. Show total deposits per month.
 -- Group by month using MONTH(transaction_date).
 -- Only show Completed deposits.
+select MONTH(transaction_date) as month,sum(amount)as total_deposits
+from transactions
+where transaction_type = "Deposit"
+ and status= "Completed"
+group by MONTH(transaction_date)
 
 
 -- Q25. Show branches with more than 25 staff.
+select branch_name,staff_count from branches
+having staff_count>25
 
 
 -- ============================================================
