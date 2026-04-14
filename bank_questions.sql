@@ -49,24 +49,34 @@ where date_joined>"2020-12-31"
 
 -- Q6. What is the total balance across all accounts?
 -- Expected: 10,285,000.00
+select sum(balance) as total_balance from accounts
 
 
 -- Q7. How many accounts does each account type have?
 -- Show account_type and count.
+select account_type,count (*) as account_count from accounts
+group by account_type
 
 
 -- Q8. What is the average loan principal by loan type?
 -- Show loan_type and average principal.
+select loan_type,avg(principal)as average_loan from loans
+group by loan_type
 
 
 -- Q9. Which branch has the most staff?
 -- Show branch name and staff count.
-
+select branch_name,staff_count from branches
+order by staff_count desc
+limit 1
 
 -- Q10. What is the total deposit amount vs total withdrawal amount?
 -- Hint: Use CASE WHEN inside SUM
 -- Show transaction_type and total_amount.
-
+select
+ sum(case when transaction_type="Deposit" then amount else 0 end) as total_deposit,
+ sum(case when transaction_type="Withdrawal" then amount else 0 end) as total_withdrawal
+from transactions
 
 -- ============================================================
 -- SECTION 3: JOINS
@@ -74,23 +84,31 @@ where date_joined>"2020-12-31"
 
 -- Q11. Show each customer's full name and their account balance.
 -- Join customers and accounts tables.
-
+select customers.full_name,balance from customers
+inner join accounts on customers.customer_id = accounts.customer_id
 
 -- Q12. Show all transactions with the customer full name.
 -- Join transactions, accounts and customers tables.
 -- Hint: transactions → accounts → customers (two joins)
-
+select customers.full_name,transaction_id,transaction_type,balance from transactions
+join accounts on transactions.account_id= accounts.account_id
+join customers on accounts.customer_id= customers.customer_id
 
 -- Q13. Show all customers who have a loan — include their
 -- full name, loan type and principal amount.
-
+select customers.full_name,loan_type,principal from loans
+join customers on loans.customer_id= customers.customer_id
 
 -- Q14. Show customers who have BOTH an account AND a loan.
 -- Use INNER JOIN on both tables.
-
+select customers.full_name,accounts.customer_id,accounts.account_type,loans.loan_type from accounts
+inner join customers on accounts.customer_id= customers.customer_id
+inner join loans on accounts.customer_id = loans.customer_id
 
 -- Q15. Show ALL customers including those with no loans.
 -- Use LEFT JOIN — customers with no loan show NULL.
+select customers.full_name,loan_id,loan_type,principal,interest_rate from customers
+left join loans on customers.customer_id= loans.customer_id
 
 
 -- ============================================================
