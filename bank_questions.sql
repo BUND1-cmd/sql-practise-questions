@@ -197,13 +197,30 @@ having staff_count>25
 -- CTE Q1 — BASIC CTE
 -- Write a CTE called 'high_balance' that selects all accounts
 -- with balance above 200,000. Then query it to show only Active accounts.
-
-
+with high_balance as (
+    select account_id,account_type,STATUS
+    from accounts
+    where status= "Active"
+)
+select account_id,status
+from high_balance
 -- CTE Q2 — CTE WITH AGGREGATION
 -- Write a CTE called 'customer_totals' that calculates
 -- total transaction amount per customer (join transactions and accounts).
 -- Then query it to show only customers with total above 500,000.
-
+WITH customer_totals AS (
+  SELECT
+    accounts.customer_id,
+    SUM(transactions.amount) AS total_amount
+  FROM transactions
+  JOIN accounts ON transactions.account_id = accounts.account_id
+  GROUP BY accounts.customer_id
+)
+SELECT
+  customer_id,
+  total_amount
+FROM customer_totals
+WHERE total_amount > 500000;
 
 -- CTE Q3 — MULTIPLE CTEs
 -- Write TWO CTEs:
@@ -211,13 +228,33 @@ having staff_count>25
 -- 2. 'big_loans' — loans with principal above 1,000,000
 -- Then find loans that appear in BOTH CTEs.
 -- Hint: Join the two CTEs together.
+WITH active_loans AS (
+  SELECT loan_id, customer_id, status
+  FROM loans
+  WHERE status = "Active"
+),
+big_loans AS (
+  SELECT loan_id, customer_id, principal
+  FROM loans
+  WHERE principal > 1000000
+)
+SELECT active_loans.loan_id, active_loans.customer_id, active_loans.status, big_loans.principal
+FROM active_loans
+JOIN big_loans ON active_loans.loan_id = big_loans.loan_id;
 
 
 -- CTE Q4 — CTE FOR RANKING
 -- Write a CTE that calculates total balance per city.
 -- Then rank cities by total balance highest to lowest.
 -- Hint: Use the CTE result with ORDER BY.
-
+with city_balance as(
+    select sum(accounts.balance) as total_balance,customers.city
+    from accounts
+    join customers on accounts.customer_id= customers.customer_id
+    group by customers.city
+)
+select city,rank() over (order by total_balance)
+from city_balance
 
 -- CTE Q5 — REAL WORLD SCENARIO
 -- The risk team wants to flag customers whose loan principal
@@ -227,7 +264,24 @@ having staff_count>25
 -- 2. Calculates loan_to_balance ratio (principal / balance)
 -- 3. Flags customers where ratio > 3 as 'High Risk'
 -- Show customer name, balance, principal and risk flag.
-
+WITH high_risk AS (
+  SELECT
+    customers.customer_id,
+    customers.full_name,
+    SUM(accounts.balance) AS total_balance,
+    SUM(loans.principal) AS total_principal
+  FROM customers
+  JOIN accounts ON customers.customer_id = accounts.customer_id
+  JOIN loans ON customers.customer_id = loans.customer_id
+  GROUP BY customers.customer_id, customers.full_name
+)
+SELECT
+  full_name,
+  total_balance,
+  total_principal,
+  (total_principal / total_balance) AS loan_to_balance_ratio,
+  CASE WHEN (total_principal / total_balance) > 3 THEN 'High Risk' ELSE 'Low Risk' END AS risk_flag
+FROM high_risk
 
 -- ============================================================
 -- SECTION 7: WINDOW FUNCTIONS
