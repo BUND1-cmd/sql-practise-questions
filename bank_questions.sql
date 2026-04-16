@@ -289,26 +289,37 @@ FROM high_risk
 
 -- Q26. Show each transaction with a running total of amounts
 -- ordered by transaction_date.
-
+select transaction_id,
+ transaction_date,
+ sum(amount) over(order by transaction_date) as running_total
+ from transactions;
 
 -- Q27. Rank customers by their account balance highest to lowest.
 -- Show customer name, balance and rank.
+SELECT customers.full_name, accounts.balance,
+RANK() OVER (ORDER BY balance DESC) as rank
+FROM customers
+JOIN accounts ON customers.customer_id = accounts.customer_id;
 
 
 -- Q28. Show each account's balance and the difference
 -- from the average balance across all accounts.
 -- Hint: balance - AVG(balance) OVER()
+SELECT account_id, balance, balance - AVG(balance) OVER() AS difference_from_avg
+FROM accounts;
 
 
 -- Q29. For each account show the transaction amount
 -- and the previous transaction amount.
 -- Hint: LAG(amount) OVER (PARTITION BY account_id ORDER BY transaction_date)
-
-
+select account_id,amount,
+lag(amount) over (partition by account_id order by transaction_date)
+from transactions
 -- Q30. Show each branch's staff count and what percentage
 -- of total staff they represent.
 -- Hint: staff_count / SUM(staff_count) OVER() * 100
-
+SELECT branch_name, staff_count, staff_count/SUM(staff_count) OVER() * 100 AS percentage
+FROM branches;
 
 -- ============================================================
 -- SECTION 8: ADVANCED SCENARIOS
