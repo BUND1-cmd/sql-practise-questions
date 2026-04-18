@@ -315,6 +315,7 @@ FROM accounts;
 select account_id,amount,
 lag(amount) over (partition by account_id order by transaction_date)
 from transactions
+
 -- Q30. Show each branch's staff count and what percentage
 -- of total staff they represent.
 -- Hint: staff_count / SUM(staff_count) OVER() * 100
@@ -328,17 +329,38 @@ FROM branches;
 -- Q31. FRAUD DETECTION
 -- Find accounts with more than 2 transactions in a single day.
 -- Show account_id, transaction_date and transaction count.
+select account_id,transaction_date,count(*) as transaction_count
+from transactions
+group by account_id,transaction_date
+having count(*)>1
 
 
 -- Q32. DORMANT ACCOUNTS
 -- Find accounts with no transactions after 2024-02-01.
 -- Use LEFT JOIN and IS NULL.
-
+select accounts.account_id,balance,transactions.amount,transactions.transaction_date,accounts.status
+from accounts
+left join transactions on accounts.account_id = transactions.account_id
+and transaction_date > '2024-02-01'
+where transactions.account_id is null
 
 -- Q33. LOAN DEFAULT RISK
 -- Find customers where their total loan principal
 -- exceeds their account balance.
 -- Show customer name, total loans, balance and difference.
+with loan_default_risk as (
+  select customers.full_name,sum(loans.principal) as total_principal,
+  accounts.balance as total_balance
+  from customers
+  join loans on customers.customer_id = loans.customer_id
+  join accounts on customers.customer_id = accounts.customer_id
+  group by customers.full_name,accounts.balance
+)
+select full_name,total_balance,total_principal,
+(total_principal-total_balance) as difference
+from loan_default_risk
+where total_principal> total_balance
+order by difference desc
 
 
 -- Q34. BRANCH PERFORMANCE
@@ -347,7 +369,14 @@ FROM branches;
 -- - Total balance
 -- - Average balance
 -- Join accounts and branches tables.
-
+select 
+ accounts.branch,
+ sum(accounts.balance) as total_balance,
+ avg(accounts.balance) as average_balance,
+ count(*) as number_of_accounts
+from accounts
+join branches on accounts.branch = branches.branch_name
+group by accounts.branch
 
 -- Q35. CUSTOMER 360 VIEW
 -- For each customer show:
@@ -356,6 +385,17 @@ FROM branches;
 -- - Total loans
 -- - Total transactions
 -- This requires joining ALL 4 tables.
+SELECT 
+    customers.full_name,
+    customers.city,
+    accounts.balance,
+    SUM(loans.principal) as total_loans,
+    SUM(transactions.amount) as total_transactions
+FROM customers
+JOIN accounts ON customers.customer_id = accounts.customer_id
+JOIN loans ON customers.customer_id = loans.customer_id
+JOIN transactions ON accounts.account_id = transactions.account_id
+GROUP BY customers.full_name, customers.city, accounts.balance;
 -- ============================================================
 -- END OF QUESTIONS
 -- ============================================================
